@@ -1,0 +1,13 @@
+[repository]
+name = "Hedge"
+authors = ["KZdkm"]
+commit_pins = [
+]
+
+[Hyprspace]
+description = "Hot edge"
+authors = ["KZdkm"]
+output = "Hedge.so"
+build = [
+    "make all"
+]
