@@ -11,7 +11,7 @@ APICALL EXPORT std::string PLUGIN_API_VERSION() {
     return HYPRLAND_API_VERSION;
 }
 
-typedef SDispatchResult (*tSpawn)(std::string);
+typedef SDispatchResult(*tSpawn)(std::string);
 
 tSpawn pSpawn;
 
@@ -40,7 +40,7 @@ struct SHotEdgeConfig {
 };
 
 // global list of hot edges defined in the config, should be cleared on config reload
-std::vector<SHotEdgeConfig> g_HotEdges;
+std::vector<std::tuple<SHotEdgeConfig, bool>> g_HotEdges;
 
 // global state register for zone trigger, unused
 bool g_isCursorInZone = false;
@@ -58,7 +58,9 @@ uint64_t tickCounter = 0;
 
 void tick() {
     if ((tickCounter % tickPeriod == 0)) {
-        for (SHotEdgeConfig edge : g_HotEdges) {
+        for (auto& edgeConfig : g_HotEdges) {
+            auto edge = std::get<0>(edgeConfig);
+            auto state = std::get<1>(edgeConfig);
             auto monitor = g_pCompositor.get()->getMonitorFromName(edge.monitor);
             if (monitor && g_pCompositor.get()->getMonitorFromCursor() == monitor) {
                 const auto pos = g_pInputManager.get()->getMouseCoordsInternal();
@@ -105,14 +107,15 @@ void tick() {
                     }
                 }
                 if (!isWorkspaceFullscreen) {
-                    if (!g_isCursorInZone && (isCursorInActivationZone || (edge.dodgeWindow && !isIntersectingWindows))) {
+                    if (!state && (isCursorInActivationZone || (edge.dodgeWindow && !isIntersectingWindows))) {
                         pSpawn(edge.activateCommand);
-                        g_isCursorInZone = true;
+                        state = true;
                     }
                     else if (g_isCursorInZone && !isCursorInDeactivationZone && (!edge.dodgeWindow || isIntersectingWindows)) {
                         pSpawn(edge.deactivateCommand);
-                        g_isCursorInZone = false;
+                        state = false;
                     }
+                    std::get<1>(edgeConfig) = state;
                 }
 
             }
@@ -189,7 +192,7 @@ Hyprlang::CParseResult handleHotEdgeKeyword(const char* command, const char* val
     // malformed
     if (i + 1 != 8) result.setError("hotedge: config has too few arguments");
     else {
-        g_HotEdges.push_back(config);
+        g_HotEdges.push_back(std::make_tuple(config, false));
     }
 
     return result;
