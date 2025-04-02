@@ -42,9 +42,6 @@ struct SHotEdgeConfig {
 // global list of hot edges defined in the config, should be cleared on config reload
 std::vector<std::tuple<SHotEdgeConfig, bool>> g_HotEdges;
 
-// global state register for zone trigger, unused
-bool g_isCursorInZone = false;
-
 bool g_isMouseMoved = false;
 
 void onMouseMove(void* thisptr, SCallbackInfo& info, std::any args) {
@@ -60,7 +57,7 @@ void tick() {
     if ((tickCounter % tickPeriod == 0)) {
         for (auto& edgeConfig : g_HotEdges) {
             auto edge = std::get<0>(edgeConfig);
-            auto state = std::get<1>(edgeConfig);
+            bool& state = std::get<1>(edgeConfig);
             auto monitor = g_pCompositor.get()->getMonitorFromName(edge.monitor);
             if (monitor && g_pCompositor.get()->getMonitorFromCursor() == monitor) {
                 const auto pos = g_pInputManager.get()->getMouseCoordsInternal();
@@ -111,11 +108,10 @@ void tick() {
                         pSpawn(edge.activateCommand);
                         state = true;
                     }
-                    else if (g_isCursorInZone && !isCursorInDeactivationZone && (!edge.dodgeWindow || isIntersectingWindows)) {
+                    else if (state && !isCursorInDeactivationZone && (!edge.dodgeWindow || isIntersectingWindows)) {
                         pSpawn(edge.deactivateCommand);
                         state = false;
                     }
-                    std::get<1>(edgeConfig) = state;
                 }
 
             }
@@ -126,7 +122,6 @@ void tick() {
 }
 
 void reloadConfig() {
-    g_isCursorInZone = false;
     g_HotEdges.clear();
 }
 
