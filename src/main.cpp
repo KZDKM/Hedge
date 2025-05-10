@@ -63,8 +63,8 @@ void tick() {
                 const auto pos = g_pInputManager.get()->getMouseCoordsInternal();
                 CBox activationZone;
                 CBox deactivationZone;
-                Vector2D monitorPos = monitor.get()->vecPosition;
-                Vector2D monitorSize = monitor.get()->vecSize;
+                Vector2D monitorPos = monitor.get()->m_position;
+                Vector2D monitorSize = monitor.get()->m_size;
                 switch (edge.side) {
                 case eHotEdgeSide::TOP:
                     activationZone = CBox(monitorPos, Vector2D{monitorSize.x, (float)edge.activateZoneSize});
@@ -90,12 +90,12 @@ void tick() {
                 bool isIntersectingWindows = false;
                 bool isWorkspaceFullscreen = false;
                 if (edge.dodgeWindow) {
-                    auto workspace = monitor.get()->activeWorkspace;
+                    auto workspace = monitor.get()->m_activeWorkspace;
                     if (workspace) {
-                        isWorkspaceFullscreen = workspace.get()->m_efFullscreenMode == eFullscreenMode::FSMODE_FULLSCREEN;
-                        for (PHLWINDOW window : g_pCompositor.get()->m_vWindows) {
-                            if (window && window.get()->workspaceID() == workspace.get()->m_iID) {
-                                if (!CBox(window.get()->m_vRealPosition.get()->value(), window.get()->m_vRealSize.get()->value()).intersection(deactivationZone).empty()) {
+                        isWorkspaceFullscreen = workspace.get()->m_fullscreenMode == eFullscreenMode::FSMODE_FULLSCREEN;
+                        for (PHLWINDOW window : g_pCompositor.get()->m_windows) {
+                            if (window && window.get()->workspaceID() == workspace.get()->m_id) {
+                                if (!CBox(window.get()->m_realPosition.get()->value(), window.get()->m_realSize.get()->value()).intersection(deactivationZone).empty()) {
                                     isIntersectingWindows = true;
                                     break;
                                 }
